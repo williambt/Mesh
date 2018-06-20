@@ -14,7 +14,7 @@ protected:
 	std::vector<Drawable*> _objects;
 	std::vector<Light*> _lights;
 
-	Camera _camera;
+	Camera2 _camera;
 
 	Shader _shader;
 

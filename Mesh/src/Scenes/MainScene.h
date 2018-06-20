@@ -1,16 +1,18 @@
 #pragma once
 
 #include "Scene.h"
+#include "../Curves/Hermite.h"
 
 class MainScene : public Scene
 {
 private:
 
+	Hermite h;
+	Shader lineShader;
+
 	float lastTime = 0;
 	float secondCounter = 0;
 	int fps = 0;
-
-	float lookSensitivity = 0.2f;
 
 	Drawable* d;
 	float moveSpeed = 0.15f;

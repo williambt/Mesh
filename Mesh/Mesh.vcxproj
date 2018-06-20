@@ -135,7 +135,9 @@
     <ClCompile Include="src\Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Curves\AdvancedCurve.h" />
     <ClInclude Include="src\Curves\Curve.h" />
+    <ClInclude Include="src\Curves\Hermite.h" />
     <ClInclude Include="src\Input\Input.h" />
     <ClInclude Include="src\Light\Light.h" />
     <ClInclude Include="src\Light\PointLight.h" />

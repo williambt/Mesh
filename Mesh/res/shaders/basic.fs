@@ -16,6 +16,8 @@ struct light
 	vec4 diffuse;
 	vec4 specular;
 	float constantAttenuation, linearAttenuation, quadraticAttenuation;
+	float spotCutoff, spotExponent;
+	vec3 spotDirection;
 };
 
 vec4 sceneAmbient = vec4(0.2, 0.2, 0.2, 1.0);
@@ -45,12 +47,12 @@ void main()
 	
 	for(int i = 0; i < lightNumber; i++)
 	{
-		if(lights[i].position.w == 0.0)
+		if(lights[i].position.w == 0.0) //Directional
 		{
 			attenuation = 1.0;
 			lightDir = normalize(vec3(lights[i].position));
 		}
-		else
+		else //Point or Spot
 		{
 			vec3 vertToLight = vec3(lights[i].position - worldPos);
 			float distance = length(vertToLight);
@@ -58,6 +60,8 @@ void main()
 			attenuation = 1.0 / (lights[i].constantAttenuation 
 				+ lights[i].linearAttenuation * distance
 				+ lights[i].quadraticAttenuation * distance * distance);
+			
+			if(lights[i].spotCutoff
 		}
 		
 		vec3 diffReflection = attenuation * vec3(lights[i].diffuse) * (vec3(mtl.diffuse)) * max(0.0, dot(normalDir, lightDir));

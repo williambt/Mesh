@@ -84,6 +84,4 @@ public:
 
 		return _modelMatrix;
 	}
-	inline bool HasChanged() { return _changed; }
-	inline void RemoveChanged() { _changed = false; }
 };

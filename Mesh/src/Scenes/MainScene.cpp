@@ -2,19 +2,21 @@
 #include "MainScene.h"
 #include "../Light/PointLight.h"
 
-#include "../Curves/Curve.h"
+static void DrawHermite(Hermite& h, Shader& s);
+
+int selected = 0;
 
 void MainScene::Setup()
 {
 	//Load Mesh
 	Mesh m1, m2; 
-	readObj("res/sphere.obj", m1);
-	readObj("res/teapot.obj", m2);
+	readObj("res/floor.obj", m1);
+	//readObj("res/teapot.obj", m2);
 
 	//Add convert mesh to drawable and add to scene
 	_objects.push_back(meshToDrawable(m1));
-	_objects[0]->transform.SetScale(glm::vec3(0.33f));
-	_objects.push_back(meshToDrawable(m2));
+	//_objects[0]->transform.SetScale(glm::vec3(0.33f));
+	//_objects.push_back(meshToDrawable(m2));
 
 	d = _objects[0];
 
@@ -22,8 +24,8 @@ void MainScene::Setup()
 	PointLight* light = new PointLight(glm::vec3(0, 0, 0));
 	light->constantAttenuation = 0.3f;
 
-	_lights.push_back(new PointLight(glm::vec3(1, 0, 2.5f), glm::vec4(0.75f, 0.25f, 0.25f, 1)));
-	_lights.push_back(new PointLight(glm::vec3(-1, 0, 2.5f), glm::vec4(0.25f, 0.25f, 0.75f, 1)));
+	_lights.push_back(new PointLight(glm::vec3(1, 1.5f, -0.2f), glm::vec4(1, 0.75f, 0.75f, 1)));
+	//_lights.push_back(new PointLight(glm::vec3(-1, 0, 2.5f), glm::vec4(0.25f, 0.25f, 0.75f, 1)));
 	_shader.Uniform1i("lightNumber", _lights.size());
 	for (unsigned int i = 0; i < _lights.size(); ++i) //Apply lights to shader
 	{
@@ -34,15 +36,14 @@ void MainScene::Setup()
 	glm::mat4 proj = glm::perspective(glm::radians(85.0f), (float)Window::GetWidth() / (float)Window::GetHeight() , 0.001f, 1000.0f);
 	_shader.UniformMat4f("pMat", proj);
 
-	_camera.GetTransform().SetPosition(glm::vec3(0, 0, 5));
+	_camera.SetPosition(glm::vec3(0, 2, 5));
 
-	glCullFace(GL_BACK);
+	/*h.AddPoints(glm::vec2(-0.8, -0.8), glm::vec2(0.8, 0.8), glm::vec2(1, 0), glm::vec2(10, 0));
+	lineShader.Load("res/shaders/line.vs", "res/shaders/line.fs");*/
 }
 
 void MainScene::Update()
 {
-	Curve c;
-
 	float deltaTime = glfwGetTime() - lastTime;
 	lastTime = glfwGetTime();
 
@@ -89,26 +90,26 @@ void MainScene::Update()
 	//TRANSLATION
 	if (Input::GetKeyDown(GLFW_KEY_W))
 	{
-		_camera.GetTransform().Translate(moveSpeed * _camera.GetForward());
-		//_camera.GetTransform().Rotate(glm::vec3(5, 0, 0));
+		//_camera.Translate(moveSpeed * _camera.GetForward());
+		_camera.Rotate(glm::vec3(5, 0, 0));
 		//_camera.TranslateCenter(moveSpeed * _camera.GetForward());
 	}
 	if (Input::GetKeyDown(GLFW_KEY_S))
 	{
-		_camera.GetTransform().Translate(-moveSpeed * _camera.GetForward());
-		//_camera.GetTransform().Rotate(glm::vec3(-5, 0, 0));
+		//_camera.Translate(-moveSpeed * _camera.GetForward());
+		_camera.Rotate(glm::vec3(-5, 0, 0));
 		//_camera.TranslateCenter(-moveSpeed * _camera.GetForward());
 	}
 	if (Input::GetKeyDown(GLFW_KEY_A))
 	{
-		_camera.GetTransform().Translate(-moveSpeed * _camera.GetRight());
-		//_camera.GetTransform().Rotate(glm::vec3(0, -5, 0));
+		//_camera.Translate(-moveSpeed * _camera.GetRight());
+		_camera.Rotate(glm::vec3(0, -5, 0));
 		//_camera.TranslateCenter(-moveSpeed * _camera.GetRight());
 	}
 	if (Input::GetKeyDown(GLFW_KEY_D))
 	{
-		_camera.GetTransform().Translate(moveSpeed * _camera.GetRight());
-		//_camera.GetTransform().Rotate(glm::vec3(0, 5, 0));
+		//_camera.Translate(moveSpeed * _camera.GetRight());
+		_camera.Rotate(glm::vec3(0, 5, 0));
 		//_camera.TranslateCenter(moveSpeed * _camera.GetRight());
 	}
 
@@ -121,17 +122,25 @@ void MainScene::Update()
 		d->transform.Translate(glm::vec3(0, 0, moveSpeed));
 	}
 
-	if (true)
+	if (Input::GetMButtonDown(GLFW_MOUSE_BUTTON_LEFT))
 	{
+		
 		glm::vec2 mmove = Input::GetMouseMovement();
 		if (glm::length(mmove) > 0)
 		{
+			h._controlPoints[selected] += mmove / 800.0f;
 			//_camera.RotateCenterY(mmove.x * deltaTime * 10);
 			//_camera.RotateCenterX(-mmove.y * deltaTime * 10);
-			_camera.GetTransform().Rotate(glm::vec3(-mmove.y * lookSensitivity, mmove.x * lookSensitivity, 0));
+			//_camera.Rotate(glm::vec3(-mmove.y * 0.1, mmove.x * 0.1, 0));
 		}
 	}
-
+	float scroll = Input::GetScroll();
+	if (scroll != 0)
+		selected += scroll;
+	if (selected > 3)
+		selected = 0;
+	else if (selected < 0)
+		selected = 3;
 
 	if (Input::GetKeyPressed(GLFW_KEY_F1))
 	{
@@ -144,7 +153,23 @@ void MainScene::Update()
 	if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
 		Window::Close();
 
-	c.Draw(0, 1, 3.14152535*2/360);
-
 	Scene::Update();
+}
+
+static void DrawHermite(Hermite& h, Shader& s)
+{
+	std::vector<glm::vec2> points = h.ComputePoints(0.05f);
+	VertexBuffer vb(&points[0], points.size() * sizeof(glm::vec2));
+	BufferLayout layout;
+	VertexArray va;
+	layout.AddElement(LayoutElement(2, GL_FLOAT, ATTRIB_VERTEX_POS));
+	va.AddBuffers(vb, layout);
+
+	va.Bind();
+	s.Bind();
+
+	glLineWidth(2);
+	glPointSize(5);
+	glDrawArrays(GL_LINE_STRIP, 0, points.size());
+	glDrawArrays(GL_POINTS, 0, points.size());
 }

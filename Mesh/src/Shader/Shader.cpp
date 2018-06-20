@@ -44,7 +44,7 @@ static unsigned int compileShader(const char* src, int type)
 	return id;
 }
 
-Shader::Shader(const char * vsPath, const char * fsPath)
+void Shader::Load(const char* vsPath, const char* fsPath)
 {
 	_program = glCreateProgram();
 
@@ -66,6 +66,11 @@ Shader::Shader(const char * vsPath, const char * fsPath)
 	free((char*)fSrc);
 
 	Bind();
+}
+
+Shader::Shader(const char * vsPath, const char * fsPath)
+{
+	Load(vsPath, fsPath);
 }
 
 Shader::~Shader(void)

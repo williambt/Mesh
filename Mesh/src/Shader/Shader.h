@@ -8,8 +8,11 @@ private:
 	unsigned int _program;
 
 public:
+	Shader() {}
 	Shader(const char* vsPath, const char* fsPath);
 	~Shader(void);
+
+	void Load(const char* vsPath, const char* fsPath);
 
 	void Bind() const;
 	void Unbind() const;
