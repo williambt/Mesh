@@ -61,7 +61,7 @@ void main()
 				+ lights[i].linearAttenuation * distance
 				+ lights[i].quadraticAttenuation * distance * distance);
 			
-			if(lights[i].spotCutoff
+			//if(lights[i].spotCutoff
 		}
 		
 		vec3 diffReflection = attenuation * vec3(lights[i].diffuse) * (vec3(mtl.diffuse)) * max(0.0, dot(normalDir, lightDir));
