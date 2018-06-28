@@ -136,6 +136,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Curves\AdvancedCurve.h" />
+    <ClInclude Include="src\Curves\Bezier.h" />
+    <ClInclude Include="src\Curves\BSpline.h" />
     <ClInclude Include="src\Curves\Curve.h" />
     <ClInclude Include="src\Curves\Hermite.h" />
     <ClInclude Include="src\Input\Input.h" />
@@ -154,6 +156,7 @@
     <ClInclude Include="src\Renderer\Renderable.h" />
     <ClInclude Include="src\Renderer\VertexBuffer.h" />
     <ClInclude Include="src\Scenes\Camera.h" />
+    <ClInclude Include="src\Scenes\CurveTest.h" />
     <ClInclude Include="src\Scenes\DeferredShading.h" />
     <ClInclude Include="src\Scenes\MainScene.h" />
     <ClInclude Include="src\Scenes\Scene.h" />

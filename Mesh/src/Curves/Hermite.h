@@ -6,7 +6,7 @@
 class Hermite : public AdvancedCurve
 {
 private:
-	float _WG = .5f;
+	float _WG = 1.0f;
 
 public:
 

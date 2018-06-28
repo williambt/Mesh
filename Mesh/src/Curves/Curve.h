@@ -16,13 +16,9 @@ public:
 		std::vector<glm::vec2> points;
 		for (float i = 0.0f; i < 1.0f; i += step)
 		{
-			if (i == 0.999f)
-				i = 1;
-
 			points.push_back(Evaluate(i));
-			if (i + step > 1.0f && i < 0.999f)
-				i = 0.999f;
 		}
+		points.push_back(Evaluate(1));
 		return points;
 	}
 };

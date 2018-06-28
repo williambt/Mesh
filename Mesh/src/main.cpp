@@ -1,6 +1,7 @@
 #include "Window/Window.h"
 #include "Scenes/MainScene.h"
 #include "Scenes/DeferredShading.h"
+#include "Scenes/CurveTest.h"
 
 int main(int argc, char* argv[])
 {
@@ -8,7 +9,8 @@ int main(int argc, char* argv[])
 	Input::SetupCallbacks();
 
 	//MainScene scene;
-	DeferredShading scene;
+	//DeferredShading scene;
+	CurveTest scene;
 	scene.Setup();
 
 	while (Window::IsOpen())
