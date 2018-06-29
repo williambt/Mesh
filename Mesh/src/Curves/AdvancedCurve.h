@@ -5,5 +5,5 @@
 class AdvancedCurve : public Curve
 {
 public:
-	std::vector<glm::vec2> _controlPoints;
+	glm::vec2 _controlPoints[4];
 };

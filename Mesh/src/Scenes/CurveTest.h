@@ -4,6 +4,7 @@
 #include "../Curves/Hermite.h"
 #include "../Curves/Bezier.h"
 #include "../Curves/BSpline.h"
+#include <vector>
 
 static void DrawAdvancedCurve(AdvancedCurve& h, Shader& s);
 
@@ -27,20 +28,27 @@ class CurveTest : public Scene
 {
 private:
 	Shader _lineShader;
-	Hermite _hermiteCurve;
-	Bezier _bezierCurve;
-	BSpline _bsplineCurve;
-	glm::vec2* selected;
+
+	bool firstCreated = false;
+	glm::vec2 firstPoint;
+
+	std::vector<Bezier> _bezierCurves;
+	Bezier* selectedCurve;
+	int selectedIndex;
+
+	bool drawPointsAndHull = true;
 
 public:
 
 	void Setup()
 	{
 		_lineShader.Load("res/shaders/line.vs", "res/shaders/line.fs");
-
-		_hermiteCurve.AddPoints(glm::vec3(-0.9f, -0.9f, 0), glm::vec3(0.9f, 0.9f, 0), glm::vec3(0.9f, -0.9f, 0), glm::vec3(-0.9f, 0.9f, 0));
-		_bezierCurve.AddPoints(glm::vec3(-0.9f, -0.9f, 0), glm::vec3(-0.9f, 0.9f, 0), glm::vec3(0.9f, 0.9f, 0), glm::vec3(0.9f, -0.9f, 0));
-		_bsplineCurve.AddPoints(glm::vec3(-0.9f, -0.9f, 0), glm::vec3(-0.9f, 0.9f, 0), glm::vec3(0.9f, 0.9f, 0), glm::vec3(0.9f, -0.9f, 0));
+		_bezierCurves.reserve(100);
+		//_bezierCurves.push_back(Bezier());
+		//_bezierCurves.push_back(Bezier());
+		//_bezierCurves[0].AddPoints(glm::vec3(-0.9f, -0.9f, 0), glm::vec3(-0.9f, 0.9f, 0), glm::vec3(0.0f, 0.9f, 0), glm::vec3(0.0f, -0.9f, 0));
+		//_bezierCurves[1].AddPoints(glm::vec3(-0.0f, -0.9f, 0), glm::vec3(-0.0f, 0.9f, 0), glm::vec3(0.9f, 0.9f, 0), glm::vec3(0.9f, -0.9f, 0));
+		//_bezierCurves[0].AddKnot(&_bezierCurves[1]);
 	}
 
 	void Update()
@@ -50,27 +58,53 @@ public:
 			glm::vec2 mpos = Input::GetMousePos();
 			mpos = remap(mpos, 0, 800, -1, 1);
 			mpos.y = -mpos.y;
-			for (glm::vec2& p : _bsplineCurve._controlPoints)
+			bool found = false;
+			for (Bezier& b : _bezierCurves)
 			{
-				if (glm::length(p - mpos) < 0.10f)
+				for (int i = 0; i < 4/*b._controlPoints.size()*/; ++i)
 				{
-					selected = &p;
-					break;
+					if (glm::length(b._controlPoints[i] - mpos) < 20.0f / 800.0f)
+					{
+						selectedCurve = &b;
+						selectedIndex = i;
+						found = true;
+						break;
+					}
 				}
-				selected = NULL;
+			}
+			if (!found)
+			{
+				selectedCurve = NULL;
+
+				if (!firstCreated)
+				{
+					firstCreated = true;
+					firstPoint = mpos;
+				}
+				else
+				{
+					_bezierCurves.push_back(Bezier());
+					_bezierCurves.back().AddPoints(firstPoint, (firstPoint) + (mpos - firstPoint) / 3.0f, (firstPoint)+((mpos - firstPoint) / 3.0f) * 2.0f, mpos);
+					if (_bezierCurves.size() > 1)
+						(_bezierCurves.end() - 2)->AddKnot(&_bezierCurves.back());
+					firstPoint = mpos;
+				}
 			}
 		}
 		else if (Input::MButtonState(GLFW_MOUSE_BUTTON_1) == Input::KEY_RELEASED)
 		{
-			selected = NULL;
+			selectedCurve = NULL;
 		}
 
-		if (selected != NULL)
+		if (selectedCurve != NULL)
 		{
 			glm::vec2 mmov = remap(Input::GetMouseMovement(), -400, 400, -1, 1);
 			mmov.y = -mmov.y;
-			*selected += mmov;
+			selectedCurve->MovePoint(selectedIndex, mmov);
 		}
+
+		if (Input::GetKeyPressed(GLFW_KEY_SPACE))
+			drawPointsAndHull = !drawPointsAndHull;
 
 		Scene::Update();
 	}
@@ -80,19 +114,21 @@ public:
 		glClearColor(1.0f, 0.75f, 0.25f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		DrawAdvancedCurve(_bsplineCurve, _lineShader);
+		if(_bezierCurves.size() > 0)
+			_bezierCurves[0].Draw(_lineShader, drawPointsAndHull, drawPointsAndHull);
+		//DrawAdvancedCurve(_bezierCurve, _lineShader);
 	}
 
 };
 
 static void DrawAdvancedCurve(AdvancedCurve& h, Shader& s)
 {
-	std::vector<glm::vec2> points = h.ComputePoints(0.005f);
+	std::vector<glm::vec2> points = h.ComputePoints(0.01f);
 	s.Bind();
 
 	s.Uniform4f("colour", glm::vec4(1.0f, 0.2f, 0.25f, 1.0f));
 
-	glLineWidth(2);
+	glLineWidth(4);
 	glBegin(GL_LINE_STRIP);
 	{
 		for (int i = 0; i < points.size(); ++i)
@@ -112,4 +148,15 @@ static void DrawAdvancedCurve(AdvancedCurve& h, Shader& s)
 	}
 	glEnd();
 
+	s.Uniform4f("colour", glm::vec4(0.0f, 0.2f, 1.0f, 1.0f));
+
+	glLineWidth(2);
+	glBegin(GL_LINE_STRIP);
+	{
+		for (glm::vec2 p : h._controlPoints)
+		{
+			glVertex2f(p.x, p.y);
+		}
+	}
+	glEnd();
 }

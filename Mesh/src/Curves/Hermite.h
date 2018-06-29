@@ -26,10 +26,10 @@ public:
 
 	void AddPoints(glm::vec2 p1, glm::vec2 p2, glm::vec2 r1, glm::vec2 r2)
 	{
-		_controlPoints.push_back(p1);
+		/*_controlPoints.push_back(p1);
 		_controlPoints.push_back(p2);
 		_controlPoints.push_back(r1);
-		_controlPoints.push_back(r2);
+		_controlPoints.push_back(r2);*/
 	}
 
 };

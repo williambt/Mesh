@@ -7,7 +7,7 @@ private:
 	unsigned int _texID;
 	unsigned char* _data;
 	int _width, _height;
-	static Texture white;
+	//static Texture white;
 
 public:
 	Texture(void) : _width(0), _height(0) {}
@@ -25,8 +25,9 @@ public:
 
 	static Texture GetBlank() 
 	{
-		if (!white.HasData())
+		/*if (!white.HasData())
 			white.LoadFromFile("res/white.png");
-		return white;
+		return white;*/
+		return Texture();
 	}
 };

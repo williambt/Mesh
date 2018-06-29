@@ -149,6 +149,7 @@
     <ClInclude Include="src\Mesh\Face.h" />
     <ClInclude Include="src\Mesh\Group.h" />
     <ClInclude Include="src\Mesh\Mesh.h" />
+    <ClInclude Include="src\Mesh\Writer.h" />
     <ClInclude Include="src\Renderer\Buffer.h" />
     <ClInclude Include="src\Renderer\BufferLayout.h" />
     <ClInclude Include="src\Renderer\VertexArray.h" />
