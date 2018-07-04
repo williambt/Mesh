@@ -21,7 +21,8 @@ public:
 			(-2 * powf(t, 3) + 3 * powf(t, 2) + 0 * t + 0)*_controlPoints[1].y +
 			(1 * powf(t, 3) - 2 * powf(t, 2) + 1 * t + 0)*_controlPoints[2].y * _WG +
 			(1 * powf(t, 3) - 1 * powf(t, 2) + 0 * t + 0)*_controlPoints[3].y * _WG);
-		return vec;
+
+		return vec + offset;
 	}
 
 	void AddPoints(glm::vec2 p1, glm::vec2 p2, glm::vec2 r1, glm::vec2 r2)

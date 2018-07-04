@@ -8,6 +8,18 @@ private:
 	Bezier* next;
 	Bezier* previous;
 
+	void ComputeRecursive(std::vector<glm::vec2>& points, float step)
+	{
+		for (float i = step; i < 1.0f; i += step)
+		{
+			points.push_back(Evaluate(i));
+		}
+		points.push_back(Evaluate(1));
+
+		if (next)
+			next->ComputeRecursive(points, step);
+	}
+
 public:
 
 	Bezier() : next(NULL), previous(NULL), AdvancedCurve() {}
@@ -26,7 +38,20 @@ public:
 		res.y += (-3 * powf(t, 3) + 3 * powf(t, 2)) * _controlPoints[2].y;
 		res.y += powf(t, 3)*_controlPoints[3].y;
 
-		return res;
+		return res + offset;
+	}
+
+	std::vector<glm::vec2> ComputePoints(float step, bool recursive)
+	{
+		std::vector<glm::vec2> points;
+		for (float i = 0.0f; i < 1.0f; i += step)
+		{
+			points.push_back(Evaluate(i));
+		}
+		points.push_back(Evaluate(1));
+		if (recursive && next)
+			next->ComputeRecursive(points, step);
+		return points;
 	}
 
 	void AddPoints(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec2 p4)
@@ -47,6 +72,11 @@ public:
 		next = other;
 		other->previous = this;
 		other->_controlPoints[0] = _controlPoints[3];
+	}
+
+	void RemoveKnot()
+	{
+		next = NULL;
 	}
 
 	glm::vec2 GetPoint(int index) 
@@ -86,12 +116,12 @@ public:
 
 	void Draw(const Shader& s, bool drawPoints = true, bool drawHull = true, bool drawAllAttached = true)
 	{
-		std::vector<glm::vec2> points = ComputePoints(0.01f);
+		std::vector<glm::vec2> points = ComputePoints(0.01f, false);
 		s.Bind();
 
 		s.Uniform4f("colour", glm::vec4(1.0f, 0.2f, 0.25f, 1.0f));
 
-		glLineWidth(4);
+		glLineWidth(20);
 		glBegin(GL_LINE_STRIP);
 		{
 			for (int i = 0; i < points.size(); ++i)

@@ -121,7 +121,7 @@ public:
 
 	inline glm::vec3 GetRight()
 	{
-		return _right;
+		return glm::vec3(_matrix[0][0], _matrix[1][0], _matrix[2][0]);
 	}
 
 	inline glm::mat4 GetMatrix()

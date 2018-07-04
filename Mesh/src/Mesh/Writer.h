@@ -6,7 +6,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 {
 
 	FILE* file;
-	fopen_s(&file, path, "wt");
+	fopen_s(&file, path, "w");
 
 	if (!file)
 		return;
@@ -25,6 +25,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 
 	for (int i = 0; i < mesh.textureCoords.size(); ++i)
 	{
+		
 		std::string line = "vt " + std::to_string(mesh.textureCoords[i].x) + ' ' + std::to_string(mesh.textureCoords[i].y) + '\n';
 		fwrite(line.c_str(), 1, line.size(), file);
 	}
@@ -40,7 +41,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 				line += ' ' + std::to_string(f.verts[i]+1) + '/' + std::to_string(f.texts[i]+1) + '/' + std::to_string(f.norms[i]+1);
 			}
 			line += '\n';
-			fwrite(line.c_str(), 0, line.size(), file);
+			fwrite(line.c_str(), 1, line.size(), file);
 		}
 	}
 

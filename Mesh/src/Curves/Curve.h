@@ -11,7 +11,7 @@ public:
 
 	}*/
 
-	std::vector<glm::vec2> ComputePoints(float step)
+	virtual std::vector<glm::vec2> ComputePoints(float step)
 	{
 		std::vector<glm::vec2> points;
 		for (float i = 0.0f; i < 1.0f; i += step)

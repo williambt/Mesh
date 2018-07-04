@@ -37,6 +37,7 @@ private:
 	int selectedIndex;
 
 	bool drawPointsAndHull = true;
+	bool drawInternalAndExternal = false;
 
 public:
 
@@ -106,6 +107,20 @@ public:
 		if (Input::GetKeyPressed(GLFW_KEY_SPACE))
 			drawPointsAndHull = !drawPointsAndHull;
 
+		if (Input::GetKeyDown(GLFW_KEY_LEFT_CONTROL) && Input::GetKeyPressed(GLFW_KEY_Z))
+		{
+			if(_bezierCurves.size() > 0)
+				_bezierCurves.pop_back();
+			if (_bezierCurves.size() > 0)
+				_bezierCurves.back().RemoveKnot();
+		}
+
+		if (Input::GetKeyPressed(GLFW_KEY_ENTER))
+		{
+			drawInternalAndExternal = !drawInternalAndExternal;
+			//FinishCurve();
+		}
+
 		Scene::Update();
 	}
 
@@ -114,11 +129,72 @@ public:
 		glClearColor(1.0f, 0.75f, 0.25f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if(_bezierCurves.size() > 0)
-			_bezierCurves[0].Draw(_lineShader, drawPointsAndHull, drawPointsAndHull);
-		//DrawAdvancedCurve(_bezierCurve, _lineShader);
+		if (drawInternalAndExternal)
+			FinishCurve();
+		else
+			if(_bezierCurves.size() > 0)
+				_bezierCurves[0].Draw(_lineShader, drawPointsAndHull, drawPointsAndHull);
 	}
 
+	void FinishCurve()
+	{
+		std::vector<glm::vec2> points = _bezierCurves[0].ComputePoints(0.05f, true);
+		std::vector<glm::vec2> internalCurve, externalCurve;
+		for (int i = 0; i < points.size() - 1; ++i)
+		{
+			glm::vec2 internalPoint, externalPoint;
+			glm::vec2 a = points[i], b = points[i + 1];
+			glm::vec2 d(b.x, a.y);
+			d = glm::normalize(d);
+
+
+			float w = b.x - a.x;
+			float h = b.y - a.y;
+			float adAngle = atanf(h / w);
+			float internalAngle;
+			float externalAngle;
+			if (w < 0)
+			{
+				internalAngle = adAngle - (3.14159265f / 2.0f);
+				externalAngle = adAngle + (3.14159265f / 2.0f);
+			}
+			else
+			{
+				internalAngle = adAngle + (3.14159265f / 2.0f);
+				externalAngle = adAngle - (3.14159265f / 2.0f);
+			}
+
+			internalPoint.x = cosf(internalAngle) * .5f + a.x;
+			internalPoint.y = sinf(internalAngle) * .5f + a.y;
+			internalCurve.push_back(internalPoint);
+			externalPoint.x = cosf(externalAngle) * .5f + a.x;
+			externalPoint.y = sinf(externalAngle) * .5f + a.y;
+			externalCurve.push_back(externalPoint);
+		}
+
+		_lineShader.Uniform4f("colour", glm::vec4(1, .5f, 0, 1));
+		glLineWidth(20);
+		glBegin(GL_LINE_STRIP);
+		{
+			for (int i = 0; i < internalCurve.size(); ++i)
+				glVertex2f(internalCurve[i].x, internalCurve[i].y);
+		}
+		glEnd();
+		_lineShader.Uniform4f("colour", glm::vec4(0, 0, 1, 1));
+		glBegin(GL_LINE_STRIP);
+		{
+			for (int i = 0; i < externalCurve.size(); ++i)
+				glVertex2f(externalCurve[i].x, externalCurve[i].y);
+		}
+		glEnd();
+		_lineShader.Uniform4f("colour", glm::vec4(1, 0, 0, 1));
+		glBegin(GL_LINE_STRIP);
+		{
+			for (int i = 0; i < points.size(); ++i)
+				glVertex2f(points[i].x, points[i].y);
+		}
+		glEnd();
+	}
 };
 
 static void DrawAdvancedCurve(AdvancedCurve& h, Shader& s)

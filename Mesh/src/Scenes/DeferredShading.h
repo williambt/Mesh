@@ -10,10 +10,14 @@ class DeferredShading : public Scene
 {
 private:
 
-	Shader gBufferShader, lightingPassShader;
+	Shader gBufferShader, lightingPassShader, lineShader;
+	Drawable* room;
 	unsigned int gBuffer;
 	unsigned int gPosition, gNormal, gColour;
 	unsigned int rboDepth;
+	float moveSpeed = 0.25f;
+	float lookSensitivity = 0.2f;
+	bool cursorLocked = false;
 
 public:
 
@@ -57,28 +61,89 @@ public:
 
 		gBufferShader.Load("res/shaders/gBuffer.vs", "res/shaders/gBuffer.fs");
 		lightingPassShader.Load("res/shaders/lightingPass.vs", "res/shaders/lightingPass.fs");
+		lineShader.Load("res/shaders/line.vs", "res/shaders/line.fs");
 
 		Mesh mesh1;
-		readObj("res/floor.obj", mesh1);
+		readObj("res/thing.obj", mesh1);
+
+		Mesh roomMesh;
+		readObj("res/cube.obj", roomMesh);
+		
+		room = meshToDrawable(roomMesh);
+		room->transform.Scale(glm::vec3(10, 10, 10));
 
 		_objects.push_back(meshToDrawable(mesh1));
 		_objects[0]->transform.SetPosition(glm::vec3(0, 0, -1));
 
-		PointLight* pl = new PointLight(glm::vec3(0, 2.0f, 0));
-		pl->constantAttenuation = 0.33f;
+		_objects.push_back(meshToDrawable(mesh1));
+		_objects[1]->transform.SetPosition(glm::vec3(-2, 0, -1));
 
-		_lights.push_back(pl);
+		_objects.push_back(meshToDrawable(mesh1));
+		_objects[2]->transform.SetPosition(glm::vec3(2, 0, -1));
+
+		_objects.push_back(meshToDrawable(mesh1));
+		_objects[3]->transform.SetPosition(glm::vec3(0, 0, -3));
+
+		PointLight* pl1 = new PointLight(glm::vec3(-3, 2.0f, 0), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
+		pl1->constantAttenuation = 0.33f;
+
+		PointLight* pl2 = new PointLight(glm::vec3(3, 2.0f, 0), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+		pl2->constantAttenuation = 0.33f;
+
+		_lights.push_back(pl1);
+		_lights.push_back(pl2);
 		lightingPassShader.Uniform1i("lightNumber", _lights.size());
+		_shader.Uniform1i("lightNumber", _lights.size());
 		for (unsigned int i = 0; i < _lights.size(); ++i)
 		{
 			_lights[i]->ApplyToShader(lightingPassShader, i);
 		}
+		for (unsigned int i = 0; i < _lights.size(); ++i)
+		{
+			_lights[i]->ApplyToShader(_shader, i);
+		}
 
 		glm::mat4 proj = glm::perspective(glm::radians(85.0f), (float)Window::GetWidth() / (float)Window::GetHeight(), 0.001f, 1000.0f);
 		gBufferShader.UniformMat4f("pMat", proj);
+		_shader.UniformMat4f("pMat", proj);
 
 		_camera.SetPosition(glm::vec3(0.0f, 1.5f, 1.0f));
-		//_camera.Rotate(glm::vec3(-30, 0, 0));
+	}
+
+	void Update()
+	{
+		if (Input::GetKeyDown(GLFW_KEY_W))
+		{
+			_camera.Translate(_camera.GetForward() * moveSpeed);
+		}
+		if (Input::GetKeyDown(GLFW_KEY_S))
+		{
+			_camera.Translate(_camera.GetForward() * -moveSpeed);
+		}
+		if (Input::GetKeyDown(GLFW_KEY_D))
+		{
+			_camera.Translate(_camera.GetRight() * moveSpeed);
+		}
+		if (Input::GetKeyDown(GLFW_KEY_A))
+		{
+			_camera.Translate(_camera.GetRight() * -moveSpeed);
+		}
+
+		glm::vec2 mmove = Input::GetMouseMovement() * lookSensitivity;
+		_camera.Rotate(glm::vec3(-mmove.y, mmove.x, 0));
+
+		if (Input::GetKeyPressed(GLFW_KEY_F1))
+		{
+			if (cursorLocked)
+				Input::UnlockCursor();
+			else
+				Input::LockCursor();
+			cursorLocked = !cursorLocked;
+		}
+		if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
+			Window::Close();
+
+		Scene::Update();
 	}
 
 	void BindGBufferTextures()
@@ -101,7 +166,8 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-		glDrawBuffers(3, attachments);
+
+		glClearBufferfv(GL_COLOR, 0, new float[3] {0.0f, 0.0f, -10000.0f});
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -110,6 +176,7 @@ public:
 
 		for (Drawable* drawable : _objects)
 			drawable->Draw(gBufferShader);
+
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -120,6 +187,16 @@ public:
 		BindGBufferTextures();
 
 		renderQuad();
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, Window::GetWidth(), Window::GetHeight(), 0, 0, Window::GetWidth(), Window::GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		_shader.Bind();
+		_shader.UniformMat4f("vMat", _camera.GetMatrix());
+
+		room->Draw(_shader);
 	}
 };
 
