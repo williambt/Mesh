@@ -11,7 +11,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 	if (!file)
 		return;
 
-	std::string mtlLine = "mtlib pista.mtl";
+	std::string mtlLine = "mtllib pista.mtl";
 	fwrite(mtlLine.c_str() , 1, mtlLine.size(), file);
 
 	for (int i = 0; i < mesh.vertices.size(); ++i)
