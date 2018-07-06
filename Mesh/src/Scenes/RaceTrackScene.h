@@ -38,7 +38,9 @@ public:
 
 		for (int i = 0; i < track.vertices.size(); i += 2)
 		{
-			midPoints.push_back((track.vertices[i] + (track.vertices[i+1] - track.vertices[i])/2.0f) * trackScale);
+			glm::vec3 p1 = track.vertices[i];
+			glm::vec3 p2 = track.vertices[i + 1];
+			midPoints.push_back((p1 + ((p2 - p1)/2.0f)) * trackScale);
 		}
 
 		car = meshToDrawable(carMesh);
@@ -46,9 +48,25 @@ public:
 		car->transform.SetPosition(midPoints[0]);
 
 		_objects.push_back(meshToDrawable(track));
-		_objects.back()->transform.Scale(glm::vec3(trackScale));
+		_objects.back()->transform.SetScale(glm::vec3(trackScale));
 		
-		_lights.push_back(new Light(glm::vec3(0, 2, 0)));
+		PointLight* l1 = new PointLight(glm::vec3(-5, 3, -5));
+		l1->constantAttenuation = 0.33f;
+		_lights.push_back(l1);
+
+		PointLight* l2 = new PointLight(glm::vec3(5, 3, -5));
+		l2->constantAttenuation = 0.33f;
+		_lights.push_back(l2);
+
+		PointLight* l3 = new PointLight(glm::vec3(5, 3, 5));
+		l3->constantAttenuation = 0.33f;
+		_lights.push_back(l3);
+
+		PointLight* l4 = new PointLight(glm::vec3(-5, 3, 5));
+		l4->constantAttenuation = 0.33f;
+		_lights.push_back(l4);
+
+		//_lights.push_back(new Light(glm::vec3(0, 1, 0)));
 		_shader.Uniform1i("lightNumber", _lights.size());
 		for (unsigned int i = 0; i < _lights.size(); ++i) //Apply lights to shader
 		{
@@ -101,7 +119,6 @@ public:
 			if (!playing)
 				playing = true;
 			acceleration = -acceleration;
-			//carSpeed = 0;
 		}
 
 		if (playing)
@@ -130,10 +147,13 @@ public:
 				carSpeed = 0.0f;
 			}
 
-
-			glm::vec3 a = midPoints[previousPoint];
-			glm::vec3 b = midPoints[currPoint];
-			float angle = glm::acos(glm::dot(glm::normalize(a - b), glm::vec3(1, 0, 0)));
+			glm::vec2 a = glm::vec2(midPoints[previousPoint].x, midPoints[previousPoint].z);
+			glm::vec2 b = glm::vec2(midPoints[currPoint].x, midPoints[currPoint].z);
+			float angle = glm::acos(glm::dot(glm::normalize(a - b), glm::vec2(1, 0)));
+			float w = b.x - a.x;
+			float h = b.y - a.y;
+			if (w < 0.0f)
+				angle += 3.14159265f;
 			car->transform.SetRotation(glm::vec3(0, angle, 0));
 		}
 
@@ -147,12 +167,5 @@ public:
 
 		for (Drawable* drawable : _objects)
 			drawable->Draw(_shader);
-
-		glBegin(GL_LINE_STRIP);
-		{
-			glVertex3f(0, 0, 0);
-			glVertex3f(1, 0, 0);
-		}
-		glEnd();
 	}
 };

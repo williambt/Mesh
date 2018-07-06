@@ -13,8 +13,8 @@ int main(int argc, char* argv[])
 
 	//MainScene scene;
 	//DeferredShading scene;
-	//CurveTest scene;
-	RaceTrackScene scene;
+	//CurveTest scene; //Criação da pista
+	RaceTrackScene scene; //Visualização da pista
 	scene.Setup();
 
 	while (Window::IsOpen())

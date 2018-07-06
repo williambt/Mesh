@@ -11,7 +11,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 	if (!file)
 		return;
 
-	std::string mtlLine = "mtllib pista.mtl";
+	std::string mtlLine = "mtllib pista.mtl\n";
 	fwrite(mtlLine.c_str() , 1, mtlLine.size(), file);
 
 	for (int i = 0; i < mesh.vertices.size(); ++i)
@@ -36,8 +36,7 @@ static void writeObj(const char* path, const Mesh& mesh)
 	for (const Group& g : mesh.groups)
 	{
 		fwrite(("g " + g.name + '\n').c_str(), 1, g.name.size() + 3, file);
-		mtlLine = "usemtl ";
-		mtlLine += "Main";
+		mtlLine = "usemtl Main\n";
 		fwrite(mtlLine.c_str(), 1, mtlLine.size(), file);
 		for (const Face& f : g.faces)
 		{

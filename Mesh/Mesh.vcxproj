@@ -160,6 +160,7 @@
     <ClInclude Include="src\Scenes\CurveTest.h" />
     <ClInclude Include="src\Scenes\DeferredShading.h" />
     <ClInclude Include="src\Scenes\MainScene.h" />
+    <ClInclude Include="src\Scenes\RaceTrackScene.h" />
     <ClInclude Include="src\Scenes\Scene.h" />
     <ClInclude Include="src\Shader\Shader.h" />
     <ClInclude Include="src\Texture\Texture.h" />

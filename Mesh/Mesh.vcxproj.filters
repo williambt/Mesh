@@ -134,5 +134,8 @@
     <ClInclude Include="src\Mesh\Writer.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
+    <ClInclude Include="src\Scenes\RaceTrackScene.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

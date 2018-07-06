@@ -118,7 +118,7 @@ public:
 				_bezierCurves.back().RemoveKnot();
 		}
 
-		if (Input::GetKeyPressed(GLFW_KEY_Z))
+		if (Input::GetKeyPressed(GLFW_KEY_Z) && !Input::GetKeyDown(GLFW_KEY_LEFT_CONTROL))
 		{
 			drawInternalAndExternal = !drawInternalAndExternal;
 		}
@@ -127,6 +127,9 @@ public:
 		{
 			FinishCurve();
 		}
+
+		if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
+			Window::Close();
 
 		if (Input::GetKeyPressed(GLFW_KEY_C))
 		{

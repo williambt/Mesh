@@ -55,7 +55,7 @@ void main()
 		else //Point or Spot
 		{
 			vec3 vertToLight = vec3(lights[i].position - worldPos);
-			float distance = length(vertToLight);
+			float distance = length(normalize(vertToLight));
 			lightDir = normalize(vertToLight);
 			attenuation = 1.0 / (lights[i].constantAttenuation 
 				+ lights[i].linearAttenuation * distance
