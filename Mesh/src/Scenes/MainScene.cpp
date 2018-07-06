@@ -10,7 +10,7 @@ void MainScene::Setup()
 {
 	//Load Mesh
 	Mesh m1, m2; 
-	readObj("res/floor.obj", m1);
+	readObj("res/car.obj", m1);
 	//readObj("res/teapot.obj", m2);
 
 	//Add convert mesh to drawable and add to scene

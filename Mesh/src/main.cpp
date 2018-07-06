@@ -2,6 +2,7 @@
 #include "Scenes/MainScene.h"
 #include "Scenes/DeferredShading.h"
 #include "Scenes/CurveTest.h"
+#include "Scenes/RaceTrackScene.h"
 
 #include "Mesh/Writer.h"
 
@@ -12,7 +13,8 @@ int main(int argc, char* argv[])
 
 	//MainScene scene;
 	//DeferredShading scene;
-	CurveTest scene;
+	//CurveTest scene;
+	RaceTrackScene scene;
 	scene.Setup();
 
 	while (Window::IsOpen())

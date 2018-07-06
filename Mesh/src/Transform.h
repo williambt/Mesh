@@ -84,4 +84,10 @@ public:
 
 		return _modelMatrix;
 	}
+
+	inline void LookAt(glm::vec3 position, glm::vec3 center, glm::vec3 up)
+	{
+		_modelMatrix = glm::lookAt(position, center, up);
+		_changed = false;
+	}
 };

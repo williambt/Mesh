@@ -4,6 +4,7 @@
 #include "../Curves/Hermite.h"
 #include "../Curves/Bezier.h"
 #include "../Curves/BSpline.h"
+#include "../Mesh/Writer.h"
 #include <vector>
 
 static void DrawAdvancedCurve(AdvancedCurve& h, Shader& s);
@@ -38,6 +39,8 @@ private:
 
 	bool drawPointsAndHull = true;
 	bool drawInternalAndExternal = false;
+
+	bool showCompleted = true;
 
 public:
 
@@ -115,10 +118,19 @@ public:
 				_bezierCurves.back().RemoveKnot();
 		}
 
-		if (Input::GetKeyPressed(GLFW_KEY_ENTER))
+		if (Input::GetKeyPressed(GLFW_KEY_Z))
 		{
 			drawInternalAndExternal = !drawInternalAndExternal;
-			//FinishCurve();
+		}
+
+		if (Input::GetKeyPressed(GLFW_KEY_ENTER))
+		{
+			FinishCurve();
+		}
+
+		if (Input::GetKeyPressed(GLFW_KEY_C))
+		{
+			showCompleted = !showCompleted;
 		}
 
 		Scene::Update();
@@ -129,69 +141,159 @@ public:
 		glClearColor(1.0f, 0.75f, 0.25f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (drawInternalAndExternal)
-			FinishCurve();
-		else
-			if(_bezierCurves.size() > 0)
-				_bezierCurves[0].Draw(_lineShader, drawPointsAndHull, drawPointsAndHull);
+		if (_bezierCurves.size() > 0)
+		{
+			_bezierCurves[0].Draw(_lineShader, drawPointsAndHull, drawPointsAndHull);
+			if (drawInternalAndExternal)
+				DrawInternalAndExternal();
+
+			if (showCompleted)
+			{
+				std::vector<glm::vec2> points = _bezierCurves[0].ComputePoints(0.7f, true);
+				_lineShader.Uniform4f("colour", glm::vec4(1, 0, 0, 1));
+				glLineWidth(20);
+				glBegin(GL_LINE_STRIP);
+				{
+					glVertex2f(points[0].x, points[0].y);
+					glVertex2f(points.back().x, points.back().y);
+				}
+				glEnd();
+			}
+		}
 	}
 
-	void FinishCurve()
+	std::vector<glm::vec2> GetPointsBetween(glm::vec2 p1, glm::vec2 p2, float step)
+	{
+		glm::vec2 vec = p2 - p1;
+		std::vector<glm::vec2> res;
+		for (float i = 0; i < 1.0f; i += step)
+		{
+			glm::vec2 point = p1 + (vec * i);
+			res.push_back(point);
+		}
+
+		return res;
+	}
+
+	std::vector<glm::vec2> CalculateCurve(bool internal)
 	{
 		std::vector<glm::vec2> points = _bezierCurves[0].ComputePoints(0.05f, true);
-		std::vector<glm::vec2> internalCurve, externalCurve;
-		for (int i = 0; i < points.size() - 1; ++i)
+		std::vector<glm::vec2> curve;
+
+		std::vector<glm::vec2> lastToFirst = GetPointsBetween(points.back(), points[0], 0.05f);
+
+		auto* current = &points;
+
+		for (int i = 0; i < current->size() - 1; ++i)
 		{
-			glm::vec2 internalPoint, externalPoint;
-			glm::vec2 a = points[i], b = points[i + 1];
+			glm::vec2 c;
+			glm::vec2 a = current->at(i);
+			glm::vec2 b = current->at(i+1);
 			glm::vec2 d(b.x, a.y);
 			d = glm::normalize(d);
 
-
 			float w = b.x - a.x;
 			float h = b.y - a.y;
+			float m = .05f;
 			float adAngle = atanf(h / w);
-			float internalAngle;
-			float externalAngle;
+			float angle;
 			if (w < 0)
 			{
-				internalAngle = adAngle - (3.14159265f / 2.0f);
-				externalAngle = adAngle + (3.14159265f / 2.0f);
+				if (internal)
+					angle = adAngle - (3.14159265f / 2.0f);
+				else
+					angle = adAngle + (3.14159265f / 2.0f);
 			}
 			else
 			{
-				internalAngle = adAngle + (3.14159265f / 2.0f);
-				externalAngle = adAngle - (3.14159265f / 2.0f);
+				if (internal)
+					angle = adAngle + (3.14159265f / 2.0f);
+				else
+					angle = adAngle - (3.14159265f / 2.0f);
 			}
 
-			internalPoint.x = cosf(internalAngle) * .5f + a.x;
-			internalPoint.y = sinf(internalAngle) * .5f + a.y;
-			internalCurve.push_back(internalPoint);
-			externalPoint.x = cosf(externalAngle) * .5f + a.x;
-			externalPoint.y = sinf(externalAngle) * .5f + a.y;
-			externalCurve.push_back(externalPoint);
+			c.x = cosf(angle) * m + a.x;
+			c.y = sinf(angle) * m + a.y;
+			curve.push_back(c);
+			if (current == &points && i == current->size() - 2)
+			{
+				current = &lastToFirst;
+				i = -1;
+			}
 		}
 
+		curve.push_back(curve.front());
+
+		return curve;
+	}
+	void FinishCurve()
+	{
+		auto internalCurve = CalculateCurve(true);
+		auto externalCurve = CalculateCurve(false);
+
+		Mesh mesh;
+		mesh.groups.push_back(Group("Main"));
+		Group& g = mesh.groups[0];
+		mesh.textureCoords.push_back(glm::vec2(0, 1));
+		mesh.textureCoords.push_back(glm::vec2(1, 1));
+		mesh.textureCoords.push_back(glm::vec2(1, 0));
+		mesh.textureCoords.push_back(glm::vec2(0, 0));
+		mesh.normals.push_back(glm::vec3(0, 1, 0));
+		for (int i = 0; i < internalCurve.size(); ++i)
+		{
+			mesh.vertices.push_back(glm::vec3(internalCurve[i].x, 0, internalCurve[i].y));
+			mesh.vertices.push_back(glm::vec3(externalCurve[i].x, 0, externalCurve[i].y));
+		}
+		for (int i = 0; i < mesh.vertices.size(); i+=2)
+		{
+			Face f;
+			f.verts.push_back(i);
+			if (i + 2 < mesh.vertices.size())
+			{
+				f.verts.push_back(i + 2);
+				f.verts.push_back(i + 3);
+			}
+			else
+			{
+				f.verts.push_back(0);
+				f.verts.push_back(1);
+			}
+			f.verts.push_back(i + 1);
+
+			f.norms.push_back(0);
+			f.norms.push_back(0);
+			f.norms.push_back(0);
+			f.norms.push_back(0);
+
+			f.texts.push_back(0);
+			f.texts.push_back(1);
+			f.texts.push_back(2);
+			f.texts.push_back(3);
+
+			g.faces.push_back(f);
+		}
+
+		writeObj("Pistas/pista.obj", mesh);
+	}
+
+	void DrawInternalAndExternal()
+	{
+		auto internalCurve = CalculateCurve(true);
+		auto externalCurve = CalculateCurve(false);
+
 		_lineShader.Uniform4f("colour", glm::vec4(1, .5f, 0, 1));
-		glLineWidth(20);
+		glLineWidth(10);
 		glBegin(GL_LINE_STRIP);
 		{
 			for (int i = 0; i < internalCurve.size(); ++i)
 				glVertex2f(internalCurve[i].x, internalCurve[i].y);
 		}
 		glEnd();
-		_lineShader.Uniform4f("colour", glm::vec4(0, 0, 1, 1));
+		_lineShader.Uniform4f("colour", glm::vec4(0, .5f, 1, 1));
 		glBegin(GL_LINE_STRIP);
 		{
 			for (int i = 0; i < externalCurve.size(); ++i)
 				glVertex2f(externalCurve[i].x, externalCurve[i].y);
-		}
-		glEnd();
-		_lineShader.Uniform4f("colour", glm::vec4(1, 0, 0, 1));
-		glBegin(GL_LINE_STRIP);
-		{
-			for (int i = 0; i < points.size(); ++i)
-				glVertex2f(points[i].x, points[i].y);
 		}
 		glEnd();
 	}
