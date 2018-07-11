@@ -26,59 +26,67 @@ uniform int lightNumber;
 uniform light lights[10];
 
 uniform sampler2D uTexture;
+uniform int hasNormalMap;
+uniform sampler2D uNormalMap;
 uniform mat3 inv_transp;
+
 uniform material mtl;
 
-in vec3 normal;
-in vec2 uv;
-in vec4 worldPos;
+in VS_OUT {
+	vec3 normal;
+	vec2 uv;
+	vec4 worldPos;
+	mat3 TBN;
+} fs_in;
+
 in mat4 viewMatrix;
 
 void main()
 {
-	vec3 normalDir = normalize(inv_transp * normal);
-	vec3 viewDir = normalize(vec3(inverse(viewMatrix) * vec4(0, 0, 0, 1) - worldPos));
+	vec3 normal = fs_in.normal;
+	if(hasNormalMap == 1)
+	{
+		normal = texture(uNormalMap, fs_in.uv).rgb;
+		normal = normalize(normal * 2.0 - 1.0);
+		normal = normalize(fs_in.TBN * normal);
+	}
+	
+	vec3 normalDir = normal;
+	vec3 viewDir = normalize(vec3(inverse(viewMatrix) * vec4(0, 0, 0, 1) - fs_in.worldPos));
 	vec3 lightDir;
 	float attenuation;
 	
 	vec3 totalLight = vec3(sceneAmbient) * vec3(mtl.ambient);
 	
-	vec4 texel = texture(uTexture, uv);
+	vec4 texel = texture(uTexture, fs_in.uv);
 	
-	for(int i = 0; i < lightNumber; i++)
+	for(int i = 0; i < lightNumber; ++i)
 	{
+		vec3 lightDir;
+		float attenuation;
 		if(lights[i].position.w == 0.0) //Directional
 		{
-			attenuation = 1.0;
+			attenuation = 0.0;
 			lightDir = normalize(vec3(lights[i].position));
-		}
-		else //Point or Spot
-		{
-			vec3 vertToLight = vec3(lights[i].position - worldPos);
-			float distance = length(normalize(vertToLight));
-			lightDir = normalize(vertToLight);
-			attenuation = 1.0 / (lights[i].constantAttenuation 
-				+ lights[i].linearAttenuation * distance
-				+ lights[i].quadraticAttenuation * distance * distance);
-			
-			//if(lights[i].spotCutoff
-		}
-		
-		vec3 diffReflection = attenuation * vec3(lights[i].diffuse) * (vec3(mtl.diffuse)) * max(0.0, dot(normalDir, lightDir));
-		vec3 specReflection;
-		if(dot(normalDir, lightDir) < 0.0)
-		{
-			specReflection = vec3(0.0, 0.0, 0.0);
 		}
 		else
 		{
-			specReflection = attenuation * vec3(lights[i].specular) * vec3(mtl.specular) *
-				pow(max(0.0, dot(reflect(-lightDir, normalDir), viewDir)), mtl.shine);
+			vec3 vertToLight = vec3(lights[i].position.xyz - fs_in.worldPos.xyz);
+			float dist = length(vertToLight);
+			lightDir = normalize(vertToLight);
+			attenuation = 1.0 / 
+				(lights[i].constantAttenuation + lights[i].linearAttenuation * dist +
+				lights[i].quadraticAttenuation * pow(dist, 2.0));
 		}
 		
-		totalLight += diffReflection + specReflection;
+		vec3 diffuse = attenuation * max(dot(normalDir, lightDir), 0.0) * texel.rgb * mtl.diffuse * lights[i].diffuse.xyz;
+		
+		vec3 halfwayDir = normalize(lightDir + viewDir);
+		float spec = pow(max(dot(normalDir, halfwayDir), 0.0), mtl.shine);
+		vec3 specular = lights[i].specular.rgb * spec * attenuation * mtl.specular;
+			
+		totalLight += diffuse + specular;
 	}
 	
-	
-	frag_colour = vec4(totalLight, 1.0) * texel;
+	frag_colour = vec4(totalLight, 0.0) * texel;
 }

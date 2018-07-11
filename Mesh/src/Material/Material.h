@@ -13,7 +13,8 @@ public:
 	glm::vec3 ambient, diffuse, specular;
 	float shine;
 
-	Texture diffuseTexture;
+	bool hasNormalMap;
+	Texture diffuseTexture, normalMap;
 
 	Material(void) {}
 	Material(const std::string& name) { this->name = name; }
@@ -25,5 +26,8 @@ public:
 		shader.Uniform3f("mtl.specular", specular);
 		shader.Uniform1f("mtl.shine", shine);
 		shader.Uniform1i("uTexture", 0);
+		shader.Uniform1i("hasNormalMap", hasNormalMap);
+		if (hasNormalMap)
+			shader.Uniform1i("uNormalMap", 1);
 	}
 };

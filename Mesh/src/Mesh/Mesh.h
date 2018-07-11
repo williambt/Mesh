@@ -209,6 +209,7 @@ bool readMtl(const char* mtlib, MaterialLib& outMaterialLib)
 			char name[50];
 			sscanf_s(line, "newmtl %s", name, 50);
 			currMaterial = new Material(name);
+			currMaterial->hasNormalMap = false;
 		}
 		else if (strcmp(type, "Ka") == 0)
 		{
@@ -241,6 +242,11 @@ bool readMtl(const char* mtlib, MaterialLib& outMaterialLib)
 			if (strcmp(mapType, "map_Kd") == 0)
 			{
 				currMaterial->diffuseTexture.LoadFromFile(fName);
+			}
+			else if (strcmp(mapType, "map_Bump") == 0)
+			{
+				currMaterial->hasNormalMap = true;
+				currMaterial->normalMap.LoadFromFile(fName);
 			}
 
 			free(mapType);

@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{97CE174F-B661-41B4-B294-D0D5D4D80179}</ProjectGuid>
     <RootNamespace>Mesh</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -162,6 +162,7 @@
     <ClInclude Include="src\Scenes\MainScene.h" />
     <ClInclude Include="src\Scenes\RaceTrackScene.h" />
     <ClInclude Include="src\Scenes\Scene.h" />
+    <ClInclude Include="src\Scenes\TangentTest.h" />
     <ClInclude Include="src\Shader\Shader.h" />
     <ClInclude Include="src\Texture\Texture.h" />
     <ClInclude Include="src\Transform.h" />

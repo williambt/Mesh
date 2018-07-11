@@ -13,7 +13,7 @@ private:
 	Shader gBufferShader, lightingPassShader, lineShader;
 	Drawable* room;
 	unsigned int gBuffer;
-	unsigned int gPosition, gNormal, gColour;
+	unsigned int gPosition, gNormal, gColour, gDepth;
 	unsigned int rboDepth;
 	float moveSpeed = 0.25f;
 	float lookSensitivity = 0.2f;
@@ -47,6 +47,18 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gColour, 0);
 
+		glGenTextures(1, &gDepth);
+		glBindTexture(GL_TEXTURE_2D, gDepth);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepth, 0);
+
 		glDrawBuffers(3, attachments);
 
 		glGenRenderbuffers(1, &rboDepth);
@@ -64,13 +76,14 @@ public:
 		lineShader.Load("res/shaders/line.vs", "res/shaders/line.fs");
 
 		Mesh mesh1;
-		readObj("res/thing.obj", mesh1);
+		readObj("res/Orange/orange.obj", mesh1);
 
 		Mesh roomMesh;
 		readObj("res/cube.obj", roomMesh);
 		
 		room = meshToDrawable(roomMesh);
-		room->transform.Scale(glm::vec3(10, 10, 10));
+		room->transform.SetScale(glm::vec3(10, 10, 10));
+		room->transform.SetPosition(glm::vec3(0, 9, 0));
 
 		_objects.push_back(meshToDrawable(mesh1));
 		_objects[0]->transform.SetPosition(glm::vec3(0, 0, -1));
@@ -84,14 +97,28 @@ public:
 		_objects.push_back(meshToDrawable(mesh1));
 		_objects[3]->transform.SetPosition(glm::vec3(0, 0, -3));
 
-		PointLight* pl1 = new PointLight(glm::vec3(-3, 2.0f, 0), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-		pl1->constantAttenuation = 0.33f;
+		float constAtt = 0.33f;
 
-		PointLight* pl2 = new PointLight(glm::vec3(3, 2.0f, 0), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
-		pl2->constantAttenuation = 0.33f;
+		PointLight* pl1 = new PointLight(glm::vec3(-3, 2.0f, -3), glm::vec4(0.5f, 1.0f, 1.0f, 1.0f));
+		pl1->constantAttenuation = constAtt;
+		pl1->linearAttenuation= constAtt * 2;
+
+		PointLight* pl2 = new PointLight(glm::vec3(3, 2.0f, -3), glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+		pl2->constantAttenuation = constAtt;
+		pl2->linearAttenuation = constAtt * 2;
+
+		PointLight* pl3 = new PointLight(glm::vec3(3, 2.0f, 3), glm::vec4(1.0f, 1.0f, 0.5f, 1.0f));
+		pl3->constantAttenuation = constAtt;
+		pl3->linearAttenuation = constAtt * 2;
+
+		PointLight* pl4 = new PointLight(glm::vec3(-3, 2.0f, 3), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		pl4->constantAttenuation = constAtt;
+		pl4->linearAttenuation = constAtt * 2;
 
 		_lights.push_back(pl1);
 		_lights.push_back(pl2);
+		_lights.push_back(pl3);
+		_lights.push_back(pl4);
 		lightingPassShader.Uniform1i("lightNumber", _lights.size());
 		_shader.Uniform1i("lightNumber", _lights.size());
 		for (unsigned int i = 0; i < _lights.size(); ++i)
@@ -143,6 +170,18 @@ public:
 		if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
 			Window::Close();
 
+		//Set Draw Type
+		if (Input::GetKeyPressed(GLFW_KEY_GRAVE_ACCENT))
+			lightingPassShader.Uniform1i("drawType", 0);
+		if (Input::GetKeyPressed(GLFW_KEY_1))
+			lightingPassShader.Uniform1i("drawType", 1);
+		if (Input::GetKeyPressed(GLFW_KEY_2))
+			lightingPassShader.Uniform1i("drawType", 2);
+		if (Input::GetKeyPressed(GLFW_KEY_3))
+			lightingPassShader.Uniform1i("drawType", 3);
+		if (Input::GetKeyPressed(GLFW_KEY_4))
+			lightingPassShader.Uniform1i("drawType", 4);
+
 		Scene::Update();
 	}
 
@@ -154,14 +193,19 @@ public:
 		glBindTexture(GL_TEXTURE_2D, gNormal);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, gColour);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, gDepth);
 
 		lightingPassShader.Uniform1i("gPosition", 0);
 		lightingPassShader.Uniform1i("gNormal", 1);
 		lightingPassShader.Uniform1i("gColour", 2);
+		lightingPassShader.Uniform1i("gDepth", 3);
 	}
 
 	virtual void Draw()
 	{
+		glDisable(GL_ALPHA_TEST);
+
 		glClearColor(1.0f, 0.75f, 0.25f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -177,6 +221,9 @@ public:
 		for (Drawable* drawable : _objects)
 			drawable->Draw(gBufferShader);
 
+		unsigned char pixels[800 * 800];
+
+		glReadPixels(0, 0, 800, 800, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, pixels);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

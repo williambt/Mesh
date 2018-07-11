@@ -6,7 +6,7 @@
 #define ATTRIB_VERTEX_POS 0
 #define ATTRIB_NORMAL 1
 #define ATTRIB_TEX_COORD 2
-
+#define ATTRIB_TANGENT 3
 
 struct LayoutElement
 {

@@ -3,6 +3,7 @@
 #include "Scenes/DeferredShading.h"
 #include "Scenes/CurveTest.h"
 #include "Scenes/RaceTrackScene.h"
+#include "Scenes/TangentTest.h"
 
 #include "Mesh/Writer.h"
 
@@ -12,9 +13,12 @@ int main(int argc, char* argv[])
 	Input::SetupCallbacks();
 
 	//MainScene scene;
-	//DeferredShading scene;
+	DeferredShading scene;
 	//CurveTest scene; //Criação da pista
-	RaceTrackScene scene; //Visualização da pista
+	//RaceTrackScene scene; //Visualização da pista
+
+	//TangentTest scene;
+
 	scene.Setup();
 
 	while (Window::IsOpen())

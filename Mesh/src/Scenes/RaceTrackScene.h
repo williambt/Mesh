@@ -50,20 +50,30 @@ public:
 		_objects.push_back(meshToDrawable(track));
 		_objects.back()->transform.SetScale(glm::vec3(trackScale));
 		
+		float atten = 0.1f;
+
 		PointLight* l1 = new PointLight(glm::vec3(-5, 3, -5));
-		l1->constantAttenuation = 0.33f;
+		l1->constantAttenuation = atten;
+		l1->linearAttenuation = atten;
+		//l1->quadraticAttenuation = 2;
 		_lights.push_back(l1);
 
 		PointLight* l2 = new PointLight(glm::vec3(5, 3, -5));
-		l2->constantAttenuation = 0.33f;
+		l2->constantAttenuation = atten;
+		l2->linearAttenuation = atten;
+		//l2->quadraticAttenuation = 2;
 		_lights.push_back(l2);
 
 		PointLight* l3 = new PointLight(glm::vec3(5, 3, 5));
-		l3->constantAttenuation = 0.33f;
+		l3->constantAttenuation = atten;
+		l3->linearAttenuation = atten;
+		//l3->quadraticAttenuation = 2;
 		_lights.push_back(l3);
 
 		PointLight* l4 = new PointLight(glm::vec3(-5, 3, 5));
-		l4->constantAttenuation = 0.33f;
+		l4->constantAttenuation = atten;
+		l4->linearAttenuation = atten;
+		//l4->quadraticAttenuation = 2;
 		_lights.push_back(l4);
 
 		//_lights.push_back(new Light(glm::vec3(0, 1, 0)));

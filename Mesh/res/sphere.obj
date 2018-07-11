@@ -1,6 +1,6 @@
 # Blender v2.79 (sub 0) OBJ File: ''
 # www.blender.org
-mtllib textured.mtl
+mtllib sphere.mtl
 o Sphere
 v 0.000000 0.980785 -0.195090
 v 0.000000 0.923880 -0.382683
@@ -1463,7 +1463,7 @@ vn -0.1626 0.5528 -0.8173
 vn -0.1092 -0.8286 -0.5490
 vn -0.1804 0.3805 -0.9070
 vn -0.0757 -0.9217 -0.3804
-usemtl Material
+usemtl None
 s 1
 f 4/1/1 3/2/2 13/3/3 14/4/4
 f 480/5/5 479/6/6 21/7/7 22/8/8

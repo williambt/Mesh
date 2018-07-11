@@ -38,47 +38,38 @@ void main()
 {
 	vec3 normalDir = normalize(inv_transp * normal);
 	vec3 viewDir = normalize(vec3(inverse(viewMatrix) * vec4(0, 0, 0, 1) - worldPos));
-	vec3 lightDir;
-	float attenuation;
 	
 	vec3 totalLight = vec3(sceneAmbient) * vec3(mtl.ambient);
 	
 	vec4 texel = texture(uTexture, uv);
 	
-	for(int i = 0; i < lightNumber; i++)
+	for(int i = 0; i < lightNumber; ++i)
 	{
+		vec3 lightDir;
+		float attenuation;
 		if(lights[i].position.w == 0.0) //Directional
 		{
-			attenuation = 1.0;
+			attenuation = 0.0;
 			lightDir = normalize(vec3(lights[i].position));
-		}
-		else //Point or Spot
-		{
-			vec3 vertToLight = vec3(lights[i].position - worldPos);
-			float distance = length(normalize(vertToLight));
-			lightDir = normalize(vertToLight);
-			attenuation = 1.0 / (lights[i].constantAttenuation 
-				+ lights[i].linearAttenuation * distance
-				+ lights[i].quadraticAttenuation * distance * distance);
-			
-			//if(lights[i].spotCutoff
-		}
-		
-		vec3 diffReflection = attenuation * vec3(lights[i].diffuse) * (vec3(mtl.diffuse)) * max(0.0, dot(normalDir, lightDir));
-		vec3 specReflection;
-		if(dot(normalDir, lightDir) < 0.0)
-		{
-			specReflection = vec3(0.0, 0.0, 0.0);
 		}
 		else
 		{
-			specReflection = attenuation * vec3(lights[i].specular) * vec3(mtl.specular) *
-				pow(max(0.0, dot(reflect(-lightDir, normalDir), viewDir)), mtl.shine);
+			vec3 vertToLight = vec3(lights[i].position.xyz - worldPos.xyz);
+			float dist = length(vertToLight);
+			lightDir = normalize(vertToLight);
+			attenuation = 1.0 / 
+				(lights[i].constantAttenuation + lights[i].linearAttenuation * dist +
+				lights[i].quadraticAttenuation * pow(dist, 2.0));
 		}
 		
-		totalLight += diffReflection + specReflection;
-	}
+		vec3 diffuse = attenuation * max(dot(normalDir, lightDir), 0.0) * texel.rgb * lights[i].diffuse.xyz;
+		
+		vec3 halfwayDir = normalize(lightDir + viewDir);
+		float spec = pow(max(dot(normalDir, halfwayDir), 0.0), 16.0);
+		vec3 specular = lights[i].specular.rgb * spec * attenuation;
+			
+		totalLight += diffuse + specular;
+	}	
 	
-	
-	frag_colour = vec4(totalLight, 1.0) * texel;
+	frag_colour = vec4(normal, 1.0) * texel;
 }

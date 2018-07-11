@@ -24,6 +24,7 @@ public:
 
 		shader.Bind();
 		material.diffuseTexture.Bind(0);
+		material.normalMap.Bind(1);
 		va.Bind();
 
 		glDrawArrays(GL_TRIANGLES, 0, count);
@@ -43,6 +44,10 @@ public:
 			delete g;
 	}
 
+	Drawable* GetCopy()
+	{
+	}
+
 	void Draw(const Shader& shader)
 	{
 		glm::mat4 matrix = transform.GetMatrix();
@@ -56,6 +61,7 @@ public:
 static Drawable* meshToDrawable(Mesh& mesh)
 {
 	bool hasTexCoord;
+	bool hasNormals;
 
 	Drawable* res = new Drawable();
 
@@ -64,6 +70,11 @@ static Drawable* meshToDrawable(Mesh& mesh)
 	else
 		hasTexCoord = true;
 
+	if (mesh.normals.empty())
+		hasNormals = false;
+	else
+		hasNormals = true;
+
 	for (const Group& g : mesh.groups)
 	{
 		DrawableGroup* currGroup = new DrawableGroup();
@@ -71,23 +82,53 @@ static Drawable* meshToDrawable(Mesh& mesh)
 		std::vector<float> buffer;
 		unsigned int count = 0;
 
-		for (const Face& f : g.faces)
+		for (const Face& face : g.faces)
 		{
-			for (unsigned int i = 0; i < f.verts.size(); ++i)
+			glm::vec3 tangent;
+			glm::vec3 edge1 = mesh.vertices[face.verts[1]] - mesh.vertices[face.verts[0]];
+			glm::vec3 edge2 = mesh.vertices[face.verts[2]] - mesh.vertices[face.verts[0]];
+			glm::vec3 normal;
+			if (!hasNormals)
+			{
+				normal = glm::cross(edge1, edge2);
+			}
+			glm::vec2 deltaUV1 = mesh.textureCoords[face.texts[1]] - mesh.textureCoords[face.texts[0]];
+			glm::vec2 deltaUV2 = mesh.textureCoords[face.texts[2]] - mesh.textureCoords[face.texts[0]];
+
+			float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+			tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+			tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+			tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+			tangent = glm::normalize(tangent);
+
+			for (unsigned int i = 0; i < face.verts.size(); ++i)
 			{
 				count++;
 
-				buffer.push_back(mesh.vertices[f.verts[i]].x);
-				buffer.push_back(mesh.vertices[f.verts[i]].y);
-				buffer.push_back(mesh.vertices[f.verts[i]].z);
-				buffer.push_back(mesh.normals[f.norms[i]].x);
-				buffer.push_back(mesh.normals[f.norms[i]].y);
-				buffer.push_back(mesh.normals[f.norms[i]].z);
+				buffer.push_back(mesh.vertices[face.verts[i]].x);
+				buffer.push_back(mesh.vertices[face.verts[i]].y);
+				buffer.push_back(mesh.vertices[face.verts[i]].z);
+				if (hasNormals)
+				{
+					buffer.push_back(mesh.normals[face.norms[i]].x);
+					buffer.push_back(mesh.normals[face.norms[i]].y);
+					buffer.push_back(mesh.normals[face.norms[i]].z);
+				}
+				else
+				{
+					buffer.push_back(normal.x);
+					buffer.push_back(normal.y);
+					buffer.push_back(normal.z);
+				}
 				if (hasTexCoord)
 				{
-					buffer.push_back(mesh.textureCoords[f.texts[i]].x);
-					buffer.push_back(mesh.textureCoords[f.texts[i]].y);
+					buffer.push_back(mesh.textureCoords[face.texts[i]].x);
+					buffer.push_back(mesh.textureCoords[face.texts[i]].y);
 				}
+				buffer.push_back(tangent.x);
+				buffer.push_back(tangent.y);
+				buffer.push_back(tangent.z);
 			}
 		}
 
@@ -96,6 +137,7 @@ static Drawable* meshToDrawable(Mesh& mesh)
 		currGroup->layout.AddElement(LayoutElement(3, GL_FLOAT, ATTRIB_NORMAL));
 		if (hasTexCoord)
 			currGroup->layout.AddElement(LayoutElement(2, GL_FLOAT, ATTRIB_TEX_COORD));
+		currGroup->layout.AddElement(LayoutElement(3, GL_FLOAT, ATTRIB_TANGENT));
 		currGroup->va.AddBuffers(currGroup->buffer, currGroup->layout);
 		currGroup->count = count;
 
