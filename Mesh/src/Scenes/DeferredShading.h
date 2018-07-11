@@ -13,7 +13,7 @@ private:
 	Shader gBufferShader, lightingPassShader, lineShader;
 	Drawable* room;
 	unsigned int gBuffer;
-	unsigned int gPosition, gNormal, gColour, gDepth;
+	unsigned int gPosition, gNormal, gColour;
 	unsigned int rboDepth;
 	float moveSpeed = 0.25f;
 	float lookSensitivity = 0.2f;
@@ -47,17 +47,7 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gColour, 0);
 
-		glGenTextures(1, &gDepth);
-		glBindTexture(GL_TEXTURE_2D, gDepth);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, Window::GetWidth(), Window::GetHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepth, 0);
+		
 
 		glDrawBuffers(3, attachments);
 
@@ -179,9 +169,7 @@ public:
 			lightingPassShader.Uniform1i("drawType", 2);
 		if (Input::GetKeyPressed(GLFW_KEY_3))
 			lightingPassShader.Uniform1i("drawType", 3);
-		if (Input::GetKeyPressed(GLFW_KEY_4))
-			lightingPassShader.Uniform1i("drawType", 4);
-
+		
 		Scene::Update();
 	}
 
@@ -193,18 +181,17 @@ public:
 		glBindTexture(GL_TEXTURE_2D, gNormal);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, gColour);
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gDepth);
+	
 
 		lightingPassShader.Uniform1i("gPosition", 0);
 		lightingPassShader.Uniform1i("gNormal", 1);
 		lightingPassShader.Uniform1i("gColour", 2);
-		lightingPassShader.Uniform1i("gDepth", 3);
+		
 	}
 
 	virtual void Draw()
 	{
-		glDisable(GL_ALPHA_TEST);
+		
 
 		glClearColor(1.0f, 0.75f, 0.25f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
